@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div id="authScreen" class="auth-screen hidden">
@@ -46,15 +45,15 @@
       <header class="topbar">
         <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
         <div class="breadcrumb"><span>Workspace</span><span class="crumb-slash">/</span><strong id="currentCrumb">Overview</strong></div>
-        <div class="top-actions"><span class="date-chip" id="todayLabel"></span><button class="avatar" id="accountBtn" title="Account">K</button></div>
+        <div class="top-actions"><span class="date-chip" id="todayLabel"></span><label class="theme-picker" title="Choose appearance"><span aria-hidden="true">◐</span><select id="themeSelect" aria-label="Choose theme"><option value="light">Light</option><option value="dark">Dark slate</option><option value="ocean">Ocean</option><option value="forest">Forest</option></select></label><button class="avatar" id="accountBtn" title="Account">K</button></div>
       </header>
 
       <section class="page-heading">
         <div><p class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p><h1 id="pageTitle">Good progress starts with a plan.</h1><p class="muted" id="pageSubtitle">A practical workspace for your backend engineering job switch.</p></div>
-        <div class="heading-actions"><button class="btn secondary" id="exportBtn">↧ Export Excel</button><button class="btn primary" id="addTopicBtn">＋ Add topic</button></div>
+        <div class="heading-actions"><button class="btn primary" id="addTopicBtn">＋ Add topic</button></div>
       </section>
 
-      <div class="notice" id="modeNotice"><span class="notice-icon">ⓘ</span><div><strong>Local mode is active</strong><p>Your progress is saved in this browser. Configure Supabase in Settings to sync across devices. Excel export works in either mode.</p></div><button class="notice-action" id="noticeSettings">Set up sync →</button></div>
+      <div class="notice" id="modeNotice"><span class="notice-icon">ⓘ</span><div><strong>Local mode is active</strong><p>Your progress is saved in this browser. Configure Supabase in Settings to sync across devices.</p></div><button class="notice-action" id="noticeSettings">Set up sync →</button></div>
 
       <section class="stats-grid" aria-label="Progress overview">
         <article class="stat-card"><div class="stat-top"><span>Total topics</span><span class="stat-icon violet">▤</span></div><div class="stat-value" id="totalStat">0</div><div class="stat-foot">Across your preparation plan</div></article>
@@ -69,7 +68,7 @@
       </section>
 
       <section class="panel topics-panel">
-        <div class="panel-heading topics-heading"><div><h2 id="topicsHeading">All preparation topics</h2><p class="muted" id="topicsDescription">Track your learning, one topic at a time.</p></div><div class="table-actions"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search topics..." aria-label="Search topics"></label><button class="btn secondary compact" id="importBtn">↑ Import</button><input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden></div></div>
+        <div class="panel-heading topics-heading"><div><h2 id="topicsHeading">All preparation topics</h2><p class="muted" id="topicsDescription">Track your learning, one topic at a time.</p></div><div class="table-actions"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search topics..." aria-label="Search topics"></label></div></div>
         <div class="filter-row"><div class="filter-tabs" id="statusFilters"><button class="filter-tab active" data-status="all">All topics</button><button class="filter-tab" data-status="not_started">Not started</button><button class="filter-tab" data-status="in_progress">In progress</button><button class="filter-tab" data-status="completed">Completed</button></div><label class="sort-select">Sort by <select id="sortSelect"><option value="priority">Priority</option><option value="category">Category</option><option value="title">Topic name</option><option value="status">Status</option><option value="updated">Recently updated</option></select></label></div>
         <div class="table-wrap"><table><thead><tr><th class="check-col"></th><th>TOPIC</th><th>CATEGORY</th><th>PRIORITY</th><th>STATUS</th><th>NOTES</th><th></th></tr></thead><tbody id="topicsBody"></tbody></table><div class="empty-state hidden" id="emptyState"><div class="empty-icon">⌕</div><h3>No topics found</h3><p>Try another search or add a topic to your plan.</p><button class="btn secondary" id="emptyAddBtn">Add a topic</button></div></div>
         <div class="table-footer"><span id="showingLabel">Showing 0 topics</span><span>Changes save automatically <span class="save-check">✓</span></span></div>
@@ -82,7 +81,7 @@
 
   <div class="modal-backdrop hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="modal-card wide-modal"><div class="modal-heading"><div><p class="eyebrow">CLOUD SYNC</p><h2 id="settingsTitle">Settings & sync</h2></div><button class="icon-button" id="closeSettings" aria-label="Close">×</button></div><div class="settings-callout"><strong>Want your progress on every device?</strong><p>Deploy the site to GitHub Pages, create a free Supabase project, and add the project URL and anon/publishable key below. The database schema and setup steps are included in the downloaded project.</p></div><form id="settingsForm"><label>Supabase project URL<input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co"></label><label>Supabase anon / publishable key<input id="supabaseKey" type="password" placeholder="Public client key (not a service-role key)"></label><div class="settings-actions"><button type="button" class="btn secondary" id="disconnectBtn">Use local mode</button><button type="submit" class="btn primary">Connect & sync</button></div></form><div class="settings-divider"></div><h3>Current storage</h3><p id="storageDetails" class="muted small-copy">Checking storage mode...</p><p class="small-copy muted">Security: only use the public anon/publishable key in this frontend. Row Level Security must be enabled. Never put a Supabase service-role key in GitHub Pages.</p></div></div>
 
-  <div class="modal-backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><div class="modal-heading"><div><p class="eyebrow">QUICK GUIDE</p><h2 id="helpTitle">How it works</h2></div><button class="icon-button" id="closeHelp" aria-label="Close">×</button></div><div class="help-content"><h3>Track your learning</h3><p>Change a topic's status from the table, use search and filters, or add your own topics. Your progress bar updates automatically.</p><h3>Use it on any device</h3><p>Local mode saves data only in this browser. For cross-device access, connect Supabase and create an account. Sign in with the same account on your other devices.</p><h3>Excel backup</h3><p>Export downloads an .xlsx workbook with your topics and a summary sheet. Import can load a workbook exported by this tracker. Keep periodic backups.</p><h3>GitHub Pages</h3><p>GitHub Pages hosts the static website. Supabase stores the cloud data; Excel is an export/backup, not the live database.</p></div></div></div>
+  <div class="modal-backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><div class="modal-heading"><div><p class="eyebrow">QUICK GUIDE</p><h2 id="helpTitle">How it works</h2></div><button class="icon-button" id="closeHelp" aria-label="Close">×</button></div><div class="help-content"><h3>Track your learning</h3><p>Change a topic's status from the table, use search and filters, or add your own topics. Your progress bar updates automatically.</p><h3>Use it on any device</h3><p>Local mode saves data only in this browser. For cross-device access, connect Supabase and create an account. Sign in with the same account on your other devices.</p><h3>Cloud storage</h3><p>Once Supabase is connected, your topics and progress are saved to your account and sync across devices.</p><h3>GitHub Pages</h3><p>GitHub Pages hosts the static website. Supabase stores your cloud data.</p></div></div></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
