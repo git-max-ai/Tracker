@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101828" />
+  <title>Backend Prep — Study Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div id="authScreen" class="auth-screen hidden">
+    <div class="auth-card">
+      <div class="brand-mark">B<span>•</span></div>
+      <p class="eyebrow">YOUR CAREER, ON TRACK</p>
+      <h1 id="authTitle">Welcome back</h1>
+      <p class="muted">Sign in to sync your study progress across devices.</p>
+      <form id="authForm">
+        <label>Email address<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+        <label>Password<input id="authPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters"></label>
+        <button id="authSubmit" class="btn primary full" type="submit">Sign in</button>
+      </form>
+      <p id="authMessage" class="form-message" role="status"></p>
+      <button id="authToggle" class="link-button">Create an account</button>
+      <p class="tiny muted">Your account is managed by Supabase. Never share your password.</p>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">B<span>•</span></div><div><strong>Backend Prep</strong><small>CAREER WORKSPACE</small></div></div>
+      <div class="side-label">WORKSPACE</div>
+      <nav id="categoryNav" class="category-nav" aria-label="Topic categories"></nav>
+      <div class="sidebar-bottom">
+        <div class="sync-card"><span class="sync-dot" id="syncDot"></span><div><strong id="syncTitle">Local mode</strong><small id="syncText">This browser only</small></div></div>
+        <button class="nav-item" id="settingsBtn"><span class="nav-icon">⚙</span> Settings & sync</button>
+        <button class="nav-item" id="helpBtn"><span class="nav-icon">?</span> How it works</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+        <div class="breadcrumb"><span>Workspace</span><span class="crumb-slash">/</span><strong id="currentCrumb">Overview</strong></div>
+        <div class="top-actions"><span class="date-chip" id="todayLabel"></span><button class="avatar" id="accountBtn" title="Account">K</button></div>
+      </header>
+
+      <section class="page-heading">
+        <div><p class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</p><h1 id="pageTitle">Good progress starts with a plan.</h1><p class="muted" id="pageSubtitle">A practical workspace for your backend engineering job switch.</p></div>
+        <div class="heading-actions"><button class="btn secondary" id="exportBtn">↧ Export Excel</button><button class="btn primary" id="addTopicBtn">＋ Add topic</button></div>
+      </section>
+
+      <div class="notice" id="modeNotice"><span class="notice-icon">ⓘ</span><div><strong>Local mode is active</strong><p>Your progress is saved in this browser. Configure Supabase in Settings to sync across devices. Excel export works in either mode.</p></div><button class="notice-action" id="noticeSettings">Set up sync →</button></div>
+
+      <section class="stats-grid" aria-label="Progress overview">
+        <article class="stat-card"><div class="stat-top"><span>Total topics</span><span class="stat-icon violet">▤</span></div><div class="stat-value" id="totalStat">0</div><div class="stat-foot">Across your preparation plan</div></article>
+        <article class="stat-card"><div class="stat-top"><span>Completed</span><span class="stat-icon green">✓</span></div><div class="stat-value" id="completedStat">0</div><div class="stat-foot"><span id="completedPercent">0%</span> of all topics</div></article>
+        <article class="stat-card"><div class="stat-top"><span>In progress</span><span class="stat-icon blue">◷</span></div><div class="stat-value" id="progressStat">0</div><div class="stat-foot">Topics you're working on</div></article>
+        <article class="stat-card"><div class="stat-top"><span>High priority left</span><span class="stat-icon amber">↗</span></div><div class="stat-value" id="priorityStat">0</div><div class="stat-foot">Worth focusing on next</div></article>
+      </section>
+
+      <section class="overview-grid" id="overviewGrid">
+        <article class="panel progress-panel"><div class="panel-heading"><div><h2>Preparation progress</h2><p class="muted">Small, consistent steps add up.</p></div><span class="soft-tag" id="overallPercentTag">0% complete</span></div><div class="progress-track"><div class="progress-fill" id="overallProgressFill"></div></div><div class="progress-legend"><span><i class="legend-dot done"></i> Completed <strong id="legendDone">0</strong></span><span><i class="legend-dot doing"></i> In progress <strong id="legendDoing">0</strong></span><span><i class="legend-dot todo"></i> Not started <strong id="legendTodo">0</strong></span></div><div class="quote-box"><span>✦</span><p>Don't prepare for every possible question. Prepare deeply for the skills that matter most.</p></div></article>
+        <article class="panel focus-panel"><div class="panel-heading"><div><h2>Focus areas</h2><p class="muted">Completion by category</p></div></div><div id="focusAreas" class="focus-list"></div></article>
+      </section>
+
+      <section class="panel topics-panel">
+        <div class="panel-heading topics-heading"><div><h2 id="topicsHeading">All preparation topics</h2><p class="muted" id="topicsDescription">Track your learning, one topic at a time.</p></div><div class="table-actions"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search topics..." aria-label="Search topics"></label><button class="btn secondary compact" id="importBtn">↑ Import</button><input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden></div></div>
+        <div class="filter-row"><div class="filter-tabs" id="statusFilters"><button class="filter-tab active" data-status="all">All topics</button><button class="filter-tab" data-status="not_started">Not started</button><button class="filter-tab" data-status="in_progress">In progress</button><button class="filter-tab" data-status="completed">Completed</button></div><label class="sort-select">Sort by <select id="sortSelect"><option value="priority">Priority</option><option value="category">Category</option><option value="title">Topic name</option><option value="status">Status</option><option value="updated">Recently updated</option></select></label></div>
+        <div class="table-wrap"><table><thead><tr><th class="check-col"></th><th>TOPIC</th><th>CATEGORY</th><th>PRIORITY</th><th>STATUS</th><th>NOTES</th><th></th></tr></thead><tbody id="topicsBody"></tbody></table><div class="empty-state hidden" id="emptyState"><div class="empty-icon">⌕</div><h3>No topics found</h3><p>Try another search or add a topic to your plan.</p><button class="btn secondary" id="emptyAddBtn">Add a topic</button></div></div>
+        <div class="table-footer"><span id="showingLabel">Showing 0 topics</span><span>Changes save automatically <span class="save-check">✓</span></span></div>
+      </section>
+      <footer class="footer"><span>Built for consistent progress, not perfect schedules.</span><span>Backend Prep <span class="footer-dot">•</span> v1.0</span></footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="topicModal" role="dialog" aria-modal="true" aria-labelledby="topicModalTitle"><div class="modal-card"><div class="modal-heading"><div><p class="eyebrow">MAKE IT ACTIONABLE</p><h2 id="topicModalTitle">Add a topic</h2></div><button class="icon-button" id="closeTopicModal" aria-label="Close">×</button></div><form id="topicForm"><input id="topicId" type="hidden"><label>Topic name<input id="topicTitle" required maxlength="180" placeholder="e.g. SQL Server execution plans"></label><div class="form-row"><label>Category<select id="topicCategory" required></select></label><label>Priority<select id="topicPriority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></label></div><label>Status<select id="topicStatus"><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label><label>Notes <span class="optional">(optional)</span><textarea id="topicNotes" rows="3" maxlength="2000" placeholder="Add a resource, question, or reminder..."></textarea></label><div class="modal-actions"><button type="button" class="btn secondary" id="cancelTopic">Cancel</button><button type="submit" class="btn primary">Save topic</button></div></form></div></div>
+
+  <div class="modal-backdrop hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="modal-card wide-modal"><div class="modal-heading"><div><p class="eyebrow">CLOUD SYNC</p><h2 id="settingsTitle">Settings & sync</h2></div><button class="icon-button" id="closeSettings" aria-label="Close">×</button></div><div class="settings-callout"><strong>Want your progress on every device?</strong><p>Deploy the site to GitHub Pages, create a free Supabase project, and add the project URL and anon/publishable key below. The database schema and setup steps are included in the downloaded project.</p></div><form id="settingsForm"><label>Supabase project URL<input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co"></label><label>Supabase anon / publishable key<input id="supabaseKey" type="password" placeholder="Public client key (not a service-role key)"></label><div class="settings-actions"><button type="button" class="btn secondary" id="disconnectBtn">Use local mode</button><button type="submit" class="btn primary">Connect & sync</button></div></form><div class="settings-divider"></div><h3>Current storage</h3><p id="storageDetails" class="muted small-copy">Checking storage mode...</p><p class="small-copy muted">Security: only use the public anon/publishable key in this frontend. Row Level Security must be enabled. Never put a Supabase service-role key in GitHub Pages.</p></div></div>
+
+  <div class="modal-backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><div class="modal-heading"><div><p class="eyebrow">QUICK GUIDE</p><h2 id="helpTitle">How it works</h2></div><button class="icon-button" id="closeHelp" aria-label="Close">×</button></div><div class="help-content"><h3>Track your learning</h3><p>Change a topic's status from the table, use search and filters, or add your own topics. Your progress bar updates automatically.</p><h3>Use it on any device</h3><p>Local mode saves data only in this browser. For cross-device access, connect Supabase and create an account. Sign in with the same account on your other devices.</p><h3>Excel backup</h3><p>Export downloads an .xlsx workbook with your topics and a summary sheet. Import can load a workbook exported by this tracker. Keep periodic backups.</p><h3>GitHub Pages</h3><p>GitHub Pages hosts the static website. Supabase stores the cloud data; Excel is an export/backup, not the live database.</p></div></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
